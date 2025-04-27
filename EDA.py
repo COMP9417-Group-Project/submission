@@ -1,0 +1,330 @@
+from google.colab import drive
+drive.mount('/content/drive')
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.impute import SimpleImputer
+from imblearn.over_sampling import SMOTE
+from sklearn.feature_selection import SelectKBest,f_classif,VarianceThreshold,SelectFromModel,RFECV
+
+
+
+
+from sklearn.model_selection import train_test_split
+
+
+X_train = pd.read_csv('/content/drive/MyDrive/9417group/X_train.csv')
+y_train = pd.read_csv('/content/drive/MyDrive/9417group/y_train.csv')
+X_test1 = pd.read_csv('/content/drive/MyDrive/9417group/X_test_1.csv')
+X_test2 = pd.read_csv('/content/drive/MyDrive/9417group/X_test_2.csv')
+y_test2_reduced = pd.read_csv('/content/drive/MyDrive/9417group/y_test_2_reduced.csv')
+
+
+
+
+print(f"X_train shape: {X_train.shape}")
+print(f"y_train shape: {y_train.shape}")
+print(f"X_test1 shape: {X_test1.shape}")
+print(f"X_test2 shape: {X_test2.shape}")
+print(f"y_test2_reduced shape: {y_test2_reduced.shape}")
+
+
+
+
+print(f"X_train missing values: {X_train.isna().sum().sum()}")
+print(f"y_train missing values: {y_train.isna().sum().sum()}")
+print(f"Duplicate rows in X_train: {X_train.duplicated().sum()}")
+
+
+
+
+# check y_train distribution
+class_distribution = y_train['label'].value_counts()
+class_imbalance = class_distribution.max() / class_distribution.min()
+print(f"Class imbalance ratio (max/min): {class_imbalance:.2f}")
+
+plt.figure(figsize=(12, 6))
+sns.countplot(x='label', data=y_train, order=y_train['label'].value_counts().index)
+plt.title('Class Distribution')
+plt.xlabel('Class Label')
+plt.ylabel('Count')
+plt.xticks(rotation=90)
+plt.tight_layout()
+
+
+
+
+# check feature distribution
+feature_stats = X_train.describe()
+print(feature_stats.T.head())
+
+
+
+
+# standardize the data
+scaler = StandardScaler()
+scaler.fit(X_train)
+X_train = pd.DataFrame(scaler.transform(X_train), columns=X_train.columns)
+X_test1=pd.DataFrame(scaler.transform(X_test1), columns=X_train.columns)
+X_test2=pd.DataFrame(scaler.transform(X_test2), columns=X_train.columns)
+
+
+
+
+# delete small variance features
+var_thresh = VarianceThreshold(threshold=0.1)
+transformed_data = var_thresh.fit_transform(X_train)
+retained_features = X_train.columns[var_thresh.get_support()]
+X_train = X_train[retained_features]
+print(len(retained_features))
+
+
+
+
+# search corr
+correlation_matrix = X_train.corr().abs()
+plt.figure(figsize=(16, 14))
+sns.heatmap(correlation_matrix.iloc[:30, :30], annot=False, cmap='coolwarm', center=0)
+plt.title('Feature Correlation Matrix (Subset)')
+plt.tight_layout()
+
+# filter highly correlated features
+upper = correlation_matrix.where(np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool))
+threshold = 0.8
+to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+print(f"delete features: {to_drop}")
+print(f"all features: {X_train.shape[1]}")
+X_train = X_train.drop(columns=to_drop)
+print(f"keep features: {X_train.shape[1]}")
+
+
+
+
+# set class weight
+class_counts = y_train['label'].value_counts()
+total_samples = len(y_train)
+class_weight = {class_label: total_samples / (len(class_counts) * count)
+                 for class_label, count in class_counts.items()}
+
+
+
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
+param_grid = {'C': [ 0.1, 0.2,0.3]}
+grid_search = GridSearchCV(
+    LogisticRegression(penalty='l1', solver='liblinear', class_weight=class_weight),
+    param_grid, cv=5, scoring='f1_weighted',verbose=2, n_jobs=-1
+)
+grid_search.fit(X_train, y_train['label'])
+best_C = grid_search.best_params_['C']
+print(f"best c: {best_C}")
+
+
+
+
+from sklearn.linear_model import LogisticRegression
+
+selector = SelectFromModel(
+    LogisticRegression(penalty='l1', C=0.2, solver='liblinear', class_weight=class_weight),
+    threshold='median',
+)
+
+selector.fit_transform(X_train, y_train['label'])
+
+feature_mask = selector.get_support()
+
+
+selected_features = X_train.columns[feature_mask]
+
+importances = abs(selector.estimator_.coef_[0])
+feature_importance_df = pd.DataFrame({
+    'Feature': X_train.columns,
+    'Importance': importances,
+    'Selected': feature_mask
+})
+
+feature_importance_df = feature_importance_df.sort_values('Importance', ascending=False)
+
+print(f"Selected {len(selected_features)} out of {X_train.shape[1]} features")
+
+plt.figure(figsize=(12, 8))
+sns.barplot(x='Importance', y='Feature',
+            data=feature_importance_df.head(30),
+            palette=['green' if x else 'red' for x in feature_importance_df.head(30)['Selected']])
+plt.title('Top 30 Feature Importances (Green = Selected)')
+plt.tight_layout()
+
+
+
+
+# sift features
+
+X_train1 = X_train[selected_features]
+base_model=LogisticRegression(penalty='l1', C=0.2, solver='liblinear', class_weight=class_weight)
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_scores = cross_val_score(base_model, X_train1, y_train['label'], cv=cv, scoring='accuracy')
+
+print(f"cv scores: {cv_scores}")
+print(f"mean: {cv_scores.mean():.4f}")
+print(f"std: {cv_scores.std():.4f}")
+
+
+base_model.fit(X_train1, y_train['label'])
+
+# train predict
+y_pred = base_model.predict(X_train1)
+
+# report
+print(classification_report(y_train['label'], y_pred))
+
+classes=np.unique(y_train).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_train['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('train')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+X_test2_reduced = X_test2.loc[y_test2_reduced.index]
+X_test2_1 = X_test2_reduced[selected_features]
+y_pred = base_model.predict(X_test2_1)
+
+
+# test predict
+y_pred = base_model.predict(X_test2_1)
+
+# report
+print(classification_report(y_test2_reduced['label'], y_pred,zero_division=1))
+classes=np.unique(y_test2_reduced).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_test2_reduced['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('test')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+
+
+
+# sift features
+
+X_train1 = X_train[selected_features]
+base_model=LogisticRegression(penalty='l1', C=0.2, solver='liblinear', class_weight=class_weight)
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_scores = cross_val_score(base_model, X_train1, y_train['label'], cv=cv, scoring='accuracy')
+
+print(f"cv scores: {cv_scores}")
+print(f"mean: {cv_scores.mean():.4f}")
+print(f"std: {cv_scores.std():.4f}")
+
+
+base_model.fit(X_train1, y_train['label'])
+
+# train predict
+y_pred = base_model.predict(X_train1)
+
+# report
+print(classification_report(y_train['label'], y_pred))
+
+classes=np.unique(y_train).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_train['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('train')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+X_test2_1=X_test2_reduced[selected_features]
+
+# test predict
+y_pred = base_model.predict(X_test2_1)
+
+# report
+print(classification_report(y_test2_reduced['label'], y_pred,zero_division=1))
+classes=np.unique(y_test2_reduced).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_test2_reduced['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('test')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+
+
+
+# keep features
+base_model=LogisticRegression(penalty='l1', C=0.2, solver='liblinear', class_weight=class_weight)
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_scores = cross_val_score(base_model, X_train, y_train['label'], cv=cv, scoring='accuracy')
+
+print(f"cv scores: {cv_scores}")
+print(f"mean: {cv_scores.mean():.4f}")
+print(f"std: {cv_scores.std():.4f}")
+
+
+base_model.fit(X_train, y_train['label'])
+
+# train predict
+y_pred = base_model.predict(X_train)
+
+# report
+print(classification_report(y_train['label'], y_pred))
+
+classes=np.unique(y_train).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_train['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('train')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+
+X_test2_2=X_test2_reduced
+
+# test predict
+y_pred = base_model.predict(X_test2_2)
+
+# report
+print(classification_report(y_test2_reduced['label'], y_pred,zero_division=1))
+classes=np.unique(y_test2_reduced).astype(str)
+plt.figure(figsize=(20, 20))
+sns.heatmap(confusion_matrix(y_test2_reduced['label'], y_pred,normalize='true'),
+            annot=True, fmt='.3f', cmap='Blues',
+            xticklabels=classes, yticklabels=classes)
+plt.title('test')
+plt.ylabel('True label')
+plt.xlabel('Pred Label')
+plt.show()
+
+
+
+
+X_train = X_train[selected_features]
+X_test1 = X_test1[selected_features]
+X_test2 = X_test2[selected_features]
+y_train = y_train['label']
+y_test2_reduced = y_test2_reduced['label']
+
+
+if __name__ == "__main__":
+    # TODO: 调用你想执行的主函数，比如 main()
+    pass
