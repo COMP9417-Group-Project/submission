@@ -324,7 +324,3 @@ X_test2 = X_test2[selected_features]
 y_train = y_train['label']
 y_test2_reduced = y_test2_reduced['label']
 
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
