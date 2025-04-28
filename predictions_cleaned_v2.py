@@ -281,10 +281,3 @@ np.save('preds_2.npy', preds_test1)
 
 
 
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
