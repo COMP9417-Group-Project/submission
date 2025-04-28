@@ -675,10 +675,6 @@ def compute_alpha(X_source, X_target, y_source, y_target, gamma=0.001):
 
     # Conditional MMD (per-class features)
     mmd_conditional = 0.0
-    # print("X Source shape:", X_source.shape) # (10000, 300)
-    # print("y Source shape:", y_source.shape) # (10000,)
-    # print("X target shape:", X_target.shape) # (202, 300)
-    # print("y target shape:", y_target.shape) # (202, )
     for c in np.unique(y_source):
         Xc_source = X_source[y_source == c]
         Xc_target = X_target[y_target == c]
@@ -1080,8 +1076,8 @@ all_methods = [
 # for i, v in enumerate(sorted_scores):
 #     ax2.text(v + 0.001, i, f'{v:.4f}', color='black', va='center')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 """## Visualisation"""
 
