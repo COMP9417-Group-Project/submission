@@ -911,12 +911,3 @@ logger.info(f"Overall validation scores - Weighted F1-score: Mean: {np.mean(fold
 # 29     macro avg   0.395777  0.442740  0.384015  10000.000
 # 30  weighted avg   0.734332  0.599600  0.632120  10000.000
 
-
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
