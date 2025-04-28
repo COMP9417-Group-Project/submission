@@ -53,11 +53,3 @@ plt.colorbar(label='Cluster Label') # Add a colorbar to show cluster mapping
 plt.show()
 
 
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
