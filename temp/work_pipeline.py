@@ -127,7 +127,13 @@ def evaluate_model(model, X, y_true):
 
 def class_conditional_weights(source_X, source_y, target_X, target_y):
     """
-    Calculate class-conditional importance weights for domain adaptation.
+        This implementation is based on the class-conditional importance weighting approach from:
+        Bickel, S., Brückner, M., & Scheffer, T. (2009). 
+        "Discriminative learning under covariate shift." 
+        Journal of Machine Learning Research, 10, 2137-2155.
+        
+        The algorithm estimates importance weights separately for each class by training
+        a discriminative model to distinguish between source and target domain instances.
     """
     source_y_np = np.array(source_y).flatten()
     target_y_np = np.array(target_y).flatten()
@@ -677,3 +683,40 @@ train_and_evaluate_model(
     X_comb_pseudo, y_comb_pseudo, X_val_set1_scaled, y_val_set1.values.flatten(),
     LogisticRegression(random_state=0, class_weight='balanced', max_iter=2000, C=0.7, penalty='l2')
 )
+
+# Weighted CE: 0.00398
+#   _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
+#               precision    recall  f1-score   support
+
+#            0       0.00      0.00      0.00         4
+#            1       0.00      0.00      0.00         1
+#            2       0.00      0.00      0.00         1
+#            3       0.21      0.46      0.29        13
+#            4       0.55      0.62      0.58        48
+#            5       0.96      0.66      0.78       896
+#            6       0.92      0.76      0.83       111
+#            7       0.34      0.71      0.46        21
+#            8       0.78      0.66      0.72       103
+#            9       0.05      0.20      0.08         5
+#           10       0.92      0.57      0.70       216
+#           11       0.42      0.81      0.55        16
+#           12       0.62      0.47      0.54        91
+#           13       0.11      0.17      0.13        12
+#           14       0.12      0.62      0.20        53
+#           15       0.50      1.00      0.67         5
+#           16       0.50      1.00      0.67         1
+#           17       0.72      0.82      0.76        71
+#           18       0.28      0.92      0.42        12
+#           19       0.49      0.63      0.55        35
+#           20       0.40      0.74      0.52        31
+#           21       0.81      0.72      0.76        54
+#           22       0.00      0.00      0.00         1
+#           23       0.19      0.75      0.30         8
+#           24       0.45      0.40      0.42        77
+#           25       0.44      0.57      0.49        37
+#           26       0.59      0.52      0.55        56
+#           27       0.60      1.00      0.75        21
+
+#     accuracy                           0.64      2000
+#    macro avg       0.43      0.56      0.46      2000
+# weighted avg       0.79      0.64      0.69      2000
