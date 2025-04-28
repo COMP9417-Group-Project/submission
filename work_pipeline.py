@@ -13,12 +13,11 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score 
 from sklearn.utils.class_weight import compute_class_weight
-import logging
 from imblearn.over_sampling import SMOTE
 from sklearn.feature_selection import RFE
-import random
 
 import sys
+
 
 # define path
 y_train_path = 'y_train.csv'
@@ -42,10 +41,8 @@ mask = np.ones(len(X_test_two), dtype=bool)
 mask[test_indices] = False
 X_test_two_unlabelled = X_test_two.iloc[mask]
 
-# print(X_test_two_labelled.shape)
-# print(X_test_two_unlabelled.shape)
 
-
+# ============================== Preprocessing (Standardisation)========================
 
 # define scaler
 scaler = MinMaxScaler()
@@ -57,15 +54,8 @@ X_test_scaled_labelled = scaler.transform(X_test_two_labelled)
 X_test_scaled_unlabelled = scaler.transform(X_test_two_unlabelled)
 
 
-# # based on the y label frequency, sort the the label 
-# labels = y_train.values.flatten()
-# label_frequency = Counter(labels)
-# sorted_labels = [label for label, _ in label_frequency.most_common()]
-# # print(label_frequency)
-# sorted_labels.reverse()
-# num_classes = len(sorted_labels)
 
-
+# ============================== Helper Funtions========================
 # weighted log loss score calculation method
 def weighted_log_loss(y_true_np, y_pred):
     """
@@ -131,21 +121,20 @@ def evaluate_model(model, X, y_true):
     return ce
 
 
-# ### Compare the effect of adaptive weights on the same model
+# ============================== Optimal Adaptation and Base Model Performance========================
 
-
+# ### Applied the optimal generalised label shift adaptation to the base model and compare perfromance
 
 def class_conditional_weights(source_X, source_y, target_X, target_y):
     """
     Calculate class-conditional importance weights for domain adaptation.
     """
-    print(type(source_X))
     source_y_np = np.array(source_y).flatten()
     target_y_np = np.array(target_y).flatten()
         
     # Get unique classes
     unique_classes = np.unique(source_y_np)
-    weights = np.ones(len(source_X))  # Initialize with ones
+    weights = np.ones(len(source_X))
     
     for cls in unique_classes:
         # Get source/target indices for this class
@@ -159,9 +148,7 @@ def class_conditional_weights(source_X, source_y, target_X, target_y):
             continue
         
         # Extract source and target samples for this class
-
         source_X_cls = source_X[source_indices]
-            
         target_X_cls = target_X[target_indices]
             
         # Compute class-specific domain weights
@@ -187,18 +174,12 @@ def class_conditional_weights(source_X, source_y, target_X, target_y):
             weights[source_indices] = cls_weights
         except Exception as e:
             print(f"Warning: Error computing weights for class {cls}: {e}")
-            # Keep default weight of 1 for this class
-    
     return weights
-    
-
 
 # without weights adaptive
 # fit models
 base_model = LogisticRegression(max_iter=2000, random_state=0)
 base_model.fit(X_train_scaled, y_train)
-
-
 
 # evaluate base model
 print(f"="*50)
@@ -206,10 +187,41 @@ print(f"Resutls without weights adaptation")
 base_lg_ce = evaluate_model(base_model, X_test_scaled_labelled, y_test_two_label.values.flatten())
 base_lg_pred = base_model.predict(X_test_scaled_labelled)
 
+# Resutls without weights adaptation
+# Weighted CE: 0.02065
+#               precision    recall  f1-score   support
 
-# # adaptive weights model
+#            2       0.00      0.00      0.00         1
+#            3       0.00      0.00      0.00         1
+#            4       0.50      0.75      0.60         4
+#            5       0.39      1.00      0.56         9
+#            6       0.50      1.00      0.67         3
+#            7       1.00      0.29      0.44        14
+#            8       0.86      0.83      0.84        29
+#            9       0.00      0.00      0.00         3
+#           10       0.10      1.00      0.17         2
+#           11       1.00      0.89      0.94         9
+#           12       0.78      0.74      0.76        43
+#           13       0.50      1.00      0.67         1
+#           14       0.00      0.00      0.00         6
+#           15       0.00      0.00      0.00         1
+#           17       0.88      0.70      0.78        10
+#           18       0.00      0.00      0.00         1
+#           19       0.67      0.50      0.57         4
+#           20       1.00      0.33      0.50         3
+#           21       0.88      1.00      0.93         7
+#           23       0.00      0.00      0.00         1
+#           24       0.41      0.47      0.44        15
+#           25       0.93      0.54      0.68        26
+#           26       0.00      0.00      0.00         1
+#           27       1.00      0.62      0.77         8
+
+#     accuracy                           0.64       202
+#    macro avg       0.47      0.49      0.43       202
+# weighted avg       0.73      0.64      0.65       202
+
+# # applied optimal adaptive weights model
 # # get class conditional weights
-# # For each class, compute domain weights separately
 weights = class_conditional_weights(
     source_X=X_train_scaled,  
     source_y=y_train.values.flatten(),
@@ -226,21 +238,55 @@ print(f"="*50)
 print(f"Resutls with weights adaptation")
 adaptive_lg_ce = evaluate_model(adpative_clf, X_test_scaled_labelled, y_test_two_label.values.flatten())
 adaptive_lg_pred = adpative_clf.predict(X_test_scaled_labelled)
-
 print(f"Weigthed CE gained: {base_lg_ce - adaptive_lg_ce:.4f}")
 
+# Resutls with weights adaptation
+# Weighted CE: 0.01646
+#               precision    recall  f1-score   support
+
+#            2       0.00      0.00      0.00         1
+#            3       0.00      0.00      0.00         1
+#            4       0.80      1.00      0.89         4
+#            5       0.43      1.00      0.60         9
+#            6       0.50      1.00      0.67         3
+#            7       1.00      0.50      0.67        14
+#            8       0.90      0.93      0.92        29
+#            9       0.00      0.00      0.00         3
+#           10       0.14      1.00      0.25         2
+#           11       1.00      0.89      0.94         9
+#           12       0.81      0.81      0.81        43
+#           13       0.50      1.00      0.67         1
+#           14       0.00      0.00      0.00         6
+#           15       0.00      0.00      0.00         1
+#           17       1.00      0.70      0.82        10
+#           18       0.00      0.00      0.00         1
+#           19       1.00      0.75      0.86         4
+#           20       0.67      0.67      0.67         3
+#           21       1.00      1.00      1.00         7
+#           23       1.00      1.00      1.00         1
+#           24       0.52      0.73      0.61        15
+#           25       1.00      0.62      0.76        26
+#           26       0.00      0.00      0.00         1
+#           27       1.00      0.75      0.86         8
+
+#     accuracy                           0.74       202
+#    macro avg       0.55      0.60      0.54       202
+# weighted avg       0.79      0.74      0.74       202
+
+# Weigthed CE gained: 0.0042
 
 
 
-##
-# Add new imports at the top
+# ============================== Plots the performance improved per class with optimal weight adaptation strategy========================
 from sklearn.calibration import calibration_curve
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import seaborn as sns
 
-def compare_class_performance(y_true, pred1, pred2):
+def compare_class_performance(y_true, pred1, pred2, output_dir="plots/results"):
     """Compare per-class F1 scores between two models"""
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Get complete list of unique classes present in any report
     report1 = classification_report(y_true, pred1, output_dict=True, zero_division=0)
     report2 = classification_report(y_true, pred2, output_dict=True, zero_division=0)
@@ -284,10 +330,12 @@ compare_class_performance(y_test_two_label, base_lg_pred, adaptive_lg_pred)
 
 
 # ### Discussion about weights adaptation
-# Based on the above result, the weight adaptation method improved performance of the model on the most of the classes that effectively migtigate the effect of the conditional shift on the 
+# Based on the above result, the weight adaptation method 
+# improved performance is seen on the most of the classes indicating the weight adaptation 
+# effectively migtigate the effect of the conditional shift
 
 
-
+# ============================== Fine tuning the adapted models========================
 # Compare with baseline model
 print(f"="*50)
 print(f"Fine tuned lg adapted model results")
@@ -299,8 +347,6 @@ trial_lg_ce = evaluate_model(trial_clf, X_test_scaled_labelled, y_test_two_label
 trial_pred = trial_clf.predict(X_test_scaled_labelled)
 
 print(f"Weigthed CE gained: {base_lg_ce - trial_lg_ce:.5f}")
-
-
 
 
 # best ce logistic regression model
@@ -379,9 +425,6 @@ print(f"Weigthed CE gained: {base_lg_ce - trial_lg_ce:.5f}")
 
 
 # ### Trials on other models and fine tuning 
-
-
-
 from sklearn.svm import SVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -402,24 +445,57 @@ adpative_sgd.fit(X_train_scaled, y_train, sample_weight=weights)
 
 # evaluate adapative model
 print(f"="*50)
-print(f"Resutls with weights adaptation")
+print(f"Resutls with weights adaptation(SGD)")
 adaptive_sgd_ce = evaluate_model(adpative_sgd, X_test_scaled_labelled, y_test_two_label.values.flatten())
 adaptive_sgd_pred = adpative_sgd.predict(X_test_scaled_labelled)
 
 print(f"Weigthed CE gained: {base_sgd_ce - adaptive_sgd_ce:.4f}")
 
+# ==================================================
+# Resutls with weights adaptation
+# Weighted CE: 0.02007
+#               precision    recall  f1-score   support
 
-# ### Ensemble on Adaptive Logistic Regression and SGD 
+#            2       0.00      0.00      0.00         1
+#            3       0.00      0.00      0.00         1
+#            4       1.00      1.00      1.00         4
+#            5       0.38      1.00      0.55         9
+#            6       0.50      1.00      0.67         3
+#            7       1.00      0.43      0.60        14
+#            8       0.86      0.86      0.86        29
+#            9       0.00      0.00      0.00         3
+#           10       0.11      1.00      0.19         2
+#           11       1.00      0.89      0.94         9
+#           12       0.89      0.37      0.52        43
+#           13       1.00      1.00      1.00         1
+#           14       0.00      0.00      0.00         6
+#           15       0.00      0.00      0.00         1
+#           17       1.00      0.70      0.82        10
+#           18       0.00      0.00      0.00         1
+#           19       1.00      0.75      0.86         4
+#           20       0.38      1.00      0.55         3
+#           21       1.00      0.86      0.92         7
+#           23       0.00      0.00      0.00         1
+#           24       0.40      0.67      0.50        15
+#           25       0.62      0.81      0.70        26
+#           26       1.00      1.00      1.00         1
+#           27       1.00      0.38      0.55         8
+
+#     accuracy                           0.63       202
+#    macro avg       0.55      0.57      0.51       202
+# weighted avg       0.74      0.63      0.63       202
+
+# Weigthed CE gained: 0.0057
 
 
-
-import numpy as np
+# ============================== Class-specific Ensembles ========================
 from sklearn.base import BaseEstimator, ClassifierMixin
+# ### Ensemble on Adaptive Logistic Regression and SGD(Optimal models)
 
 class ClassSpecificEnsemble(BaseEstimator, ClassifierMixin):
     def __init__(self, sgd_model, lr_model, sgd_classes):
-        self.sgd_model = sgd_model  # Must be fitted before ensemble.fit()
-        self.lr_model = lr_model    # Must be fitted before ensemble.fit()
+        self.sgd_model = sgd_model # fitted model
+        self.lr_model = lr_model  # fitted model
         self.sgd_classes = sgd_classes
     
     def fit(self, X, y):
@@ -444,29 +520,30 @@ class ClassSpecificEnsemble(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         return np.argmax(self.predict_proba(X), axis=1)
 
-# Define classes to prioritize with SGD
+# Define classes to prioritise with SGD
 sgd_target_classes = [4, 13, 26] 
 
-# Train models (already done in your code)
+# Train models
 best_lg = LogisticRegression(random_state=0, class_weight='balanced', max_iter=1000, C=0.7, penalty='l2')
 best_lg.fit(X_train_scaled, y_train, sample_weight=weights)
+
 best_sgd = SGDClassifier(random_state=0, loss='log_loss', tol=1e-3 )
 best_sgd.fit(X_train_scaled, y_train, sample_weight=weights)
 
 
-# Create ensemble
+# Create Class-specific ensemble with fine tuned adapted models
 ensemble = ClassSpecificEnsemble(
     sgd_model=best_sgd,
     lr_model=best_lg,
     sgd_classes=sgd_target_classes
 )
-ensemble.fit(X_train_scaled, y_train) 
+ensemble.fit(X_train_scaled, y_train)
 ensemble_ce = evaluate_model(ensemble, X_test_scaled_labelled, y_test_two_label.values.flatten())
 
 
-# ### Pseudo Labelling Test 2 and help predict test 1
 
 
+# ============================== Semi-supervised Data Integration ========================
 
 scores = {
     'baseline':[],
@@ -475,9 +552,6 @@ scores = {
     'combined_train_test2_pseudo_labelled(filtered)': [],
     'combined_train_test2_pseudo_n_true_labelled': []
 }
-
-
-
 
 # test set two pseudo labelling
 pseudo_set2_labels = ensemble.predict(X_test_scaled_unlabelled)
@@ -507,7 +581,8 @@ scores['baseline'] = train_and_evaluate_model(
     set1_baseline
 )
 
-# ============================== Pseudo-label Strategies ========================
+# ============================== Semi-supervised Data Integration Strategies Experiments ========================
+
 def get_filtered_pseudo(X, threshold=0.4):
     proba = ensemble.predict_proba(X)
     confidence = np.max(proba, axis=1)
@@ -560,32 +635,41 @@ scores['combined_train_test2_pseudo_n_true_labelled'] = train_and_evaluate_model
 
 
 # ============================== Comparison Plot ================================
-plt.figure(figsize=(12, 6))
-methods = list(scores.keys())
-values = [scores[m] for m in methods]
+def plot_model_comparison(scores, output_dir='plots/results'):
+    """
+    Plot comparison of weighted CE Loss across different methods.
+    
+    Args:
+        scores (dict): Dictionary mapping method names to their score values
+        output_dir (str): Directory path to save the output figure
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    plt.figure(figsize=(12, 6))
+    methods = list(scores.keys())
+    values = [scores[m] for m in methods]
 
-bars = plt.bar(methods, values, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'])
-plt.ylabel('weighted CE Loss', fontsize=12)
-plt.title('Model Comparison: Multi-source Training Data Integration', fontsize=12)
-plt.xticks(rotation=45, ha='right', fontsize=10)
-plt.ylim(min(values)*0.95, max(values)*1.05)
+    bars = plt.bar(methods, values, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'])
+    plt.ylabel('Weighted CE Loss', fontsize=12)
+    plt.title('Model Comparison: Multi-source Training Data Integration', fontsize=12)
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.ylim(min(values)*0.95, max(values)*1.05)
 
-# Add value labels
-for bar in bars:
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2., height,
-             f'{height:.5f}',
-             ha='center', va='bottom')
+    # Add value labels
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.5f}',
+                ha='center', va='bottom')
 
-plt.tight_layout()
-plt.savefig('plots/results/training_data_integration.png')
-plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'training_data_integration.png'))
+    plt.show()
 
-
-# ### Fine tune with the best data integration strategy
-
+plot_model_comparison(scores)
 
 
+# ============================== Fine tune with the best data integration strategy ================================
 X_comb_pseudo = np.concatenate([X_train_set1_scaled, X_set2_scaled_unlabelled], axis=0)
 y_comb_pseudo = np.concatenate([y_train_set1.values.flatten(), pseudo_set2_labels], axis=0)
 
@@ -593,18 +677,38 @@ train_and_evaluate_model(
     X_comb_pseudo, y_comb_pseudo, X_val_set1_scaled, y_val_set1.values.flatten(),
     LogisticRegression(random_state=0, class_weight='balanced', max_iter=2000, C=0.7, penalty='l2')
 )
+# Weighted CE: 0.00398
+#               precision    recall  f1-score   support
 
+#            0       0.00      0.00      0.00         4
+#            1       0.00      0.00      0.00         1
+#            2       0.00      0.00      0.00         1
+#            3       0.21      0.46      0.29        13
+#            4       0.55      0.62      0.58        48
+#            5       0.96      0.66      0.78       896
+#            6       0.92      0.76      0.83       111
+#            7       0.34      0.71      0.46        21
+#            8       0.78      0.66      0.72       103
+#            9       0.05      0.20      0.08         5
+#           10       0.92      0.57      0.70       216
+#           11       0.42      0.81      0.55        16
+#           12       0.62      0.47      0.54        91
+#           13       0.11      0.17      0.13        12
+#           14       0.12      0.62      0.20        53
+#           15       0.50      1.00      0.67         5
+#           16       0.50      1.00      0.67         1
+#           17       0.72      0.82      0.76        71
+#           18       0.28      0.92      0.42        12
+#           19       0.49      0.63      0.55        35
+#           20       0.40      0.74      0.52        31
+#           21       0.81      0.72      0.76        54
+#           22       0.00      0.00      0.00         1
+#           23       0.19      0.75      0.30         8
+#           24       0.45      0.40      0.42        77
+#           25       0.44      0.57      0.49        37
+#           26       0.59      0.52      0.55        56
+#           27       0.60      1.00      0.75        21
 
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
+#     accuracy                           0.64      2000
+#    macro avg       0.43      0.56      0.46      2000
+# weighted avg       0.79      0.64      0.69      2000
