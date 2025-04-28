@@ -4,7 +4,7 @@ Please unzip the submitted zip file first
 
 ## Data folder structure
 
-The code and dataset should be placed under the same root file, so they are suppose to be structured as:
+The code and dataset should be placed under the same root file, so they are supposed to be structured as:
 
 ```
 your_work_dir
@@ -23,7 +23,7 @@ your_work_dir
 
 ## Environment
 
-We recommend using conda to manage the environment. Run following command on your terminal under `your_work_dir` to create a conda environment:
+We recommend using conda to manage the environment. Run the following command on your terminal under `your_work_dir` to create a conda environment:
 
 ```
 conda env create -f environment.yaml
@@ -42,25 +42,25 @@ pip install -r requirements.txt
 
 To evaluate our model performance via five folds cross validation, you may run following commands on your terminal under the ` your_work_dir` directory.
 
-To reproduce result of Semi-supervised Adaptive Generalised Ensemble (SAGE) model:
+To reproduce the result of the Semi-supervised Adaptive Generalised Ensemble (SAGE) model:
 
 ```
 python work_pipeline.py
 ```
 
-To reproduce result of  N Minus One Binary Classification (NMOBC) model:
+To reproduce the result of N Minus One Binary Classification (NMOBC) model:
 
 ```
 python n_binary_classification.py
 ```
 
-To reproduce result of  Cluster-wise SVM (C-SVM) model:
+To reproduce the result of Cluster-wise SVM (C-SVM) model:
 
 ```
 python C-SVM.py
 ```
 
-To reproduce result of baseline models:
+To reproduce results of the  baseline models:
 
 ```
 python reproduce.py
@@ -76,16 +76,11 @@ python predictions.py
 
 ## EDA
 
-Our exploratory data analysis under `EDA.ipynb`, the output is generated for visualization, you can also run it by:
-
-1. First add the current environment as a new Jupyter kernel (we assume you are using conda), and then start the notebook server from your terminal and 
+To generate output for the Exploratory Data Analysis(EDA), run:
 
 ```
-python -m ipykernel install --user --name=jupter_env --display-name "jupyter_env"
-jupyter notebook
+python EDA.py
 ```
-
-2. Then the notebook should be open in your browser, you need switch the kernel into “jupyter_env”, then open the file to run the code.
 
 ## Data Distribution Shifting
 
