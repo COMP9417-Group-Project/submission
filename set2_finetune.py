@@ -973,10 +973,3 @@ if isinstance(X, pd.DataFrame):
 
 
 
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
