@@ -170,6 +170,4 @@ print(f"Weighted F1 score across all folds: {np.array(folds_wf1).mean():.8f}")
 print(f"Standard deviation of the F1 score across all folds: {np.array(folds_wf1).std():.8f}")
 
 
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
+
