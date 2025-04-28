@@ -125,11 +125,3 @@ for class_label in unique_classes:
 print("t-SNE plots display process completed.")
 
 
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
