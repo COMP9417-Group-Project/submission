@@ -149,7 +149,7 @@ def class_conditional_weights(source_X, source_y, target_X, target_y):
         y_domain = np.concatenate([np.zeros(len(source_indices)), np.ones(len(target_indices))])
 
         try:
-            lr = LogisticRegression(class_weight='balanced', max_iter=1000)
+            lr = LogisticRegression(random_state=0, class_weight='balanced', max_iter=2000, C=0.7, penalty='l2')
             lr.fit(X_domain, y_domain)
 
             # Get probabilities for source samples
