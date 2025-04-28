@@ -82,16 +82,13 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import make_scorer
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-import xgboost as xgb
 
 # Load data
-X_train = pd.read_csv('../../X_train.csv').values
-y_train = pd.read_csv('../../y_train.csv').values.ravel()
-X_test = pd.read_csv('../../X_test_2.csv').head(202)
-y_test = pd.read_csv('../../y_test_2_reduced.csv').values.ravel()
+X_train = pd.read_csv('X_train.csv').values
+y_train = pd.read_csv('y_train.csv').values.ravel()
+X_test = pd.read_csv('X_test_2.csv').head(202)
+y_test = pd.read_csv('y_test_2_reduced.csv').values.ravel()
 
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
 
@@ -99,36 +96,6 @@ skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
 
 model = SVC(C=5, probability=True, random_state=0)
 
-# model = RandomForestClassifier(
-#         n_estimators=500,
-#         max_depth=10,
-#         min_samples_split=10,
-#         min_samples_leaf=1,
-#         max_features='log2',
-#         criterion='entropy',
-#         n_jobs=-1,
-#         random_state=42
-#     )
-
-# model = CatBoostClassifier(
-#         iterations=2000,
-#         task_type='GPU',
-#         random_state=9417,
-#         learning_rate=0.03,
-#         loss_function='MultiClass',
-#         eval_metric='Accuracy',
-#         )
-
-params = {
-    'objective': 'mutli:softprob',
-    'eval_metric': 'logloss',
-    'max_delta_step': 1,
-    'subsample': 0.8,
-    'colsample_bytree': 0.7,
-    'tree_method': 'hist',
-    'alpha': 0.5,
-    'lambda': 1.5,
-}
 
 
 folds_ce = []
@@ -145,27 +112,8 @@ for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X_train, y_train)):
     print("Training...")
     model.fit(X_train_fold, y_train_fold)
 
-    # dtrain_fold = xgb.DMatrix(X_train_fold, label=y_train_fold)
-    # dval_fold = xgb.DMatrix(X_test_fold, label=y_test_fold)
-    # model = xgb.train(
-    #     params,
-    #     dtrain_fold,
-    #     num_boost_round=1000,
-    #     evals=[(dval_fold, 'validation')],
-    #     early_stopping_rounds=50,
-    #     verbose_eval=100
-    # )
-
     print("Valiadating...")
-    #y_pred_prob = model.predict(dval_fold)
     ce, wf1= evaluate_model(model, X_test_fold, y_test_fold)
-    # y_pred_prob = model.predict(X_test_fold)  # (n_samples, 28)
-    # y_pred_label = (y_pred_prob > 0.5).astype(int)
-    # ce = weighted_log_loss_test(y_test_fold, y_pred_prob)
-    # print(f"Weighted CE: {ce:.4f}")
-    # print(classification_report(y_test_fold, y_pred_label))
-    # cr = classification_report(y_test_fold, y_pred_label, output_dict=True)
-    # wf1 = cr['weighted avg']['f1-score']
 
     folds_ce.append(ce)
     folds_wf1.append(wf1)

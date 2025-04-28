@@ -27,11 +27,11 @@ from sklearn.metrics import f1_score
 
 
 # define path
-y_train_path = '../../../y_train.csv'
-y_test_path = '../../../y_test_2_reduced.csv'
-x_train_path = '../../../X_train.csv'
-x_test_one_path = '../../../X_test_1.csv'
-x_test_two_path = '../../../X_test_2.csv'
+y_train_path = 'y_train.csv'
+y_test_path = 'y_test_2_reduced.csv'
+x_train_path = 'X_train.csv'
+x_test_one_path = 'X_test_1.csv'
+x_test_two_path = 'X_test_2.csv'
 
 
 # read df
@@ -197,7 +197,7 @@ Label shift occurs when $ P_{\text{train}}(y) \neq P_{\text{test}}(y)$, while $P
 
 #### **c) Jensen-Shannon Divergence (JSD)**  
 - **Result**:  
-  - JSD = **0.57** (range: 0–1).  
+  - JSD = **0.57** (range: 0-1).  
   - Interpretation: High divergence indicates **severe distribution mismatch**.  
 
 ---
@@ -564,7 +564,7 @@ ce_score_results['covariate_shift_adapted'].append(coral_adapted_ce)
 """### Approach 3: Dynamic Distribution Adaptation (DDA)
 Concept: Balance marginal (covariate) and conditional (label) distribution shifts.   
 
-Goal: Addresses compound shifts where both $P(X)$ and $P(Y∣X)$ change.
+Goal: Addresses compound shifts where both $P(X)$ and $P(Y|X)$ change.
 """
 
 from sklearn.metrics import pairwise_kernels
@@ -733,7 +733,7 @@ Reference:
 ### Method 1: Class-Wise Kolmogorov-Smirnov (KS) Tests
 **Concept** For each feature and class, compare distributions between training and test sets.  
 
-**Goal**: Detect differences in feature distributions within the same class $P(X∣Y))$.
+**Goal**: Detect differences in feature distributions within the same class $P(X|Y))$.
 Reference:
 """
 
@@ -909,7 +909,7 @@ The Pred_proba has significant concept shift, but it is harmless. The model is s
 > Ideas From: https://www.nannyml.com/blog/concept-drift#concept-drift-detection-with-nannyml
 > Performance metrics such as accuracy, precision, recall, or f1-score will be the same for both models (ROC AUC will be impacted, though, since it uses the model scores rather than just class assignments).
 
-> concept shift might occur in any region within the feature space. If it happens to be in a sparse region, its impact on the model’s performance will be minor. This is because there is not much training nor serving data in this region. Thus, the model will hardly ever get to predict in this region. Any misclassifications caused by the concept shift in a sparse region will be rare events, not contributing much to the model’s overall performance.
+> concept shift might occur in any region within the feature space. If it happens to be in a sparse region, its impact on the model's performance will be minor. This is because there is not much training nor serving data in this region. Thus, the model will hardly ever get to predict in this region. Any misclassifications caused by the concept shift in a sparse region will be rare events, not contributing much to the model’s overall performance.
 
 Use F1-score as evaluation metric, compare the performance on train and test set use SVM (baseline) as the classifier.
 """

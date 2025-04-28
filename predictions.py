@@ -10,22 +10,10 @@ Original file is located at
 # import libraries
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import numpy as np
-import os
-from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import f1_score
-from sklearn.utils.class_weight import compute_class_weight
-import logging
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import RFE
-import random
 
 import sys
 

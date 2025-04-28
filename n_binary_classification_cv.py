@@ -155,31 +155,22 @@ def get_class_probabilities(X, classifiers, class_mapping, sorted_labels):
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np
-import os
-import random
 from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
-from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import make_scorer, balanced_accuracy_score, f1_score, precision_recall_curve, auc
 import logging
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import RFE
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 
 
 # define path
-y_train_path = '../../y_train.csv'
-y_test_path = '../../y_test_2_reduced.csv'
-x_train_path = '../../X_train.csv'
-x_test_one_path = '../../X_test_1.csv'
-x_test_two_path = '../../X_test_2.csv'
+y_train_path = 'y_train.csv'
+y_test_path = 'y_test_2_reduced.csv'
+x_train_path = 'X_train.csv'
+x_test_one_path = 'X_test_1.csv'
+x_test_two_path = 'X_test_2.csv'
 
 
 # read df
