@@ -631,3 +631,150 @@ print(classification_report(all_true_labels, all_predictions, zero_division=0))
 # Calculate overall weighted log loss
 overall_weighted_loss = weighted_log_loss(np.array(all_true_labels), np.array(all_prob_matrices))
 print(f"\nOverall Weighted Log Loss (5-Fold CV): {overall_weighted_loss:.4f}")
+
+
+#
+# Investigating effect of kernelPCA
+#
+
+def weighted_log_loss(y_true_np, y_pred):
+    """
+    Compute the weighted cross-entropy (log loss) given true labels and predicted probabilities.
+
+    Parameters:
+    - y_true: 1-d array like object contains (range 0-27), shape: (n_samples,)
+    - y_pred: array like object contains list of probabilities, shape: (n_samples, 28)
+
+    Returns:
+    - Weighted log loss (scalar).
+    """
+    import numpy as np
+    import pandas as pd
+
+    # Number of classes
+    n_classes = 28  # Classes 0-27
+
+    # Convert discrete labels to one-hot encoded format
+    def to_one_hot(labels, num_classes):
+        one_hot = np.zeros((len(labels), num_classes))
+        for i, label in enumerate(labels):
+            if 0 <= label < num_classes:
+                one_hot[i, label] = 1
+        return one_hot
+
+    # Convert true labels to one-hot format
+    y_true_one_hot = to_one_hot(y_true_np, n_classes)
+
+
+    # Compute class frequencies
+    class_counts = np.sum(y_true_one_hot, axis=0)
+
+    # Compute class weights with safety check for zero counts
+    class_weights = np.zeros_like(class_counts)
+    for c in range(n_classes):
+        # Avoid division by zero
+        if class_counts[c] > 0:
+            class_weights[c] = 1.0 / class_counts[c]
+
+    # Normalize weights to sum to 1
+    class_weights /= np.sum(class_weights)
+
+    # Compute weighted loss
+    sample_weights = np.sum(y_true_one_hot * class_weights, axis=1)
+
+    # Calculate log loss term
+    log_terms = np.sum(y_true_one_hot * np.log(y_pred), axis=1)
+    loss = -np.mean(sample_weights * log_terms)
+
+    return loss
+
+# SVM, but without kernel PCA, just rbf
+
+import numpy as np
+import pandas as pd
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import KFold
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+
+# Load the data
+X_train = pd.read_csv('X_train.csv')
+y_train = pd.read_csv('y_train.csv')
+
+# Assuming 'label' column in y_train
+y_train = y_train['label'].values
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+# 5-fold CV
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+weighted_log_losses = []
+
+for train_index, val_index in kf.split(X_train_scaled):
+    X_train_fold, X_val_fold = X_train_scaled[train_index], X_train_scaled[val_index]
+    y_train_fold, y_val_fold = y_train[train_index], y_train[val_index]
+
+    # SVM with RBF kernel
+    svm = SVC(kernel='rbf', probability=True)
+    svm.fit(X_train_fold, y_train_fold)
+
+    # Predict probabilities
+    y_pred_prob = svm.predict_proba(X_val_fold)
+
+    # Calculate weighted log loss
+    loss = weighted_log_loss(y_val_fold, y_pred_prob)
+    weighted_log_losses.append(loss)
+
+# Print results
+print(f"Weighted Log Loss for each fold: {weighted_log_losses}")
+print(f"Average Weighted Log Loss: {np.mean(weighted_log_losses)}")
+
+# 5 fold CV, SVM with RBF kernelpca
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import KFold
+from sklearn.svm import SVC
+from sklearn.decomposition import KernelPCA
+from sklearn.preprocessing import StandardScaler
+
+# Load the data
+X_train = pd.read_csv('X_train.csv')
+y_train = pd.read_csv('y_train.csv')
+
+# Assuming 'label' column in y_train
+y_train = y_train['label'].values
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+# Kernel PCA
+kpca = KernelPCA(n_components=50, kernel='rbf')
+X_train_kpca = kpca.fit_transform(X_train_scaled)
+
+# 5-fold CV
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+weighted_log_losses = []
+
+for train_index, val_index in kf.split(X_train_kpca):
+    X_train_fold, X_val_fold = X_train_kpca[train_index], X_train_kpca[val_index]
+    y_train_fold, y_val_fold = y_train[train_index], y_train[val_index]
+
+    # SVM with RBF kernel
+    svm = SVC(kernel='rbf', probability=True)
+    svm.fit(X_train_fold, y_train_fold)
+
+    # Predict probabilities
+    y_pred_prob = svm.predict_proba(X_val_fold)
+
+    # Calculate weighted log loss
+    loss = weighted_log_loss(y_val_fold, y_pred_prob)
+    weighted_log_losses.append(loss)
+
+# Print results
+print(f"Weighted Log Loss for each fold: {weighted_log_losses}")
+print(f"Average Weighted Log Loss: {np.mean(weighted_log_losses)}")
