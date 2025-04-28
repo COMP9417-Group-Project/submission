@@ -249,7 +249,7 @@ preds_test2 = ensemble.predict_proba(X_test_two_scaled_unlabelled)
 print(preds_test2.shape)
 
 # Save predictions to a .npy file
-np.save('preds_1.npy', preds_test2)
+np.save('preds_2.npy', preds_test2)
 
 """### Semi-supervised data integration for Test 1"""
 
@@ -274,5 +274,5 @@ preds_test1 = best_test_model.predict_proba(X_test_one_scaled)
 print(preds_test1.shape)
 
 # Save predictions to a .npy file
-np.save('preds_2.npy', preds_test1)
+np.save('preds_1.npy', preds_test1)
 
