@@ -250,7 +250,6 @@ for i in range(n_class_clusters):
                         0, ith_cluster_silhouette_values,
                         facecolor=color, edgecolor=color, alpha=0.7)
     
-    # 标注簇编号
     ax.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
     y_lower = y_upper + 1
 
@@ -279,7 +278,7 @@ self_training_model.fit(X_mixed, y_mixed)
 
 y_pred = self_training_model.predict(X_train_2)
 
-# 评估性能
+# evaluate performance
 
 print(classification_report (y_train_2, y_pred))
 
