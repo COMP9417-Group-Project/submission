@@ -848,15 +848,3 @@ print(classification_report(y_val, np.argmax(val_probs, axis=1)))
 
 
 
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
