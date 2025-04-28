@@ -1255,15 +1255,3 @@ visualize_domain_shift(X_test_two_labelled, X_test_two_unlabelled, 'Test Two(lab
 
 
 
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    # TODO: 调用你想执行的主函数，比如 main()
-    pass
