@@ -17,7 +17,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -25,19 +24,14 @@ from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
-from sklearn.utils.class_weight import compute_class_weight
-import logging
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import RFE
-import random
-import sys
+
 
 # define path
-y_train_path = 'y_train.csv'
-y_test_path = 'y_test_2_reduced.csv'
-x_train_path = 'X_train.csv'
-x_test_one_path = 'X_test_1.csv'
-x_test_two_path = 'X_test_2.csv'
+y_train_path = '../../../y_train.csv'
+y_test_path = '../../../y_test_2_reduced.csv'
+x_train_path = '../../../X_train.csv'
+x_test_one_path = '../../../X_test_1.csv'
+x_test_two_path = '../../../X_test_2.csv'
 
 
 # read df
@@ -170,8 +164,8 @@ def detect_label_shift(y_train, y_test, alpha=0.05):
 
 print(f"Label shift detected by chi-square test: {detect_label_shift(y.values.flatten(), y_test.values.flatten())}")
 
-"""### Method 3: Distribution Testing (Jensen–Shannon divergence)
-Use Jensen–Shannon divergence to detect label drifting instead of using the KL divergence. JS divergence is a more suitable measure of distance between two probability distributions than the KL divergence, since it has following properties: more symmetric $(JSD(X || Y) = JSD(Y || X))$, bounded, and robust in the presence of mixed shifts (covariates + concepts); KL divergence is only available when the distributions are strictly overlapping.
+"""### Method 3: Distribution Testing (Jensen-Shannon divergence)
+Use Jensen-Shannon divergence to detect label drifting instead of using the KL divergence. JS divergence is a more suitable measure of distance between two probability distributions than the KL divergence, since it has following properties: more symmetric $(JSD(X || Y) = JSD(Y || X))$, bounded, and robust in the presence of mixed shifts (covariates + concepts); KL divergence is only available when the distributions are strictly overlapping.
 """
 
 from scipy.spatial.distance import jensenshannon
@@ -215,7 +209,6 @@ Reweight training examples based on the ratio of test-to-train class frequencies
 """
 
 import numpy as np
-from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
@@ -371,11 +364,9 @@ https://www.nannyml.com/blog/detecting-covariate-shift-multivariate-approach
 
 # import libraries
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from collections import Counter
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -383,12 +374,6 @@ from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
-from sklearn.utils.class_weight import compute_class_weight
-import logging
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import RFE
-import random
-import sys
 
 # NOTE: using standard normalization
 scaler = StandardScaler()

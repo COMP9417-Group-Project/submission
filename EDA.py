@@ -7,29 +7,22 @@ Original file is located at
     https://colab.research.google.com/drive/1sMhC8c-Us2XutNAsH5-NnYqs-pHiZ658
 """
 
-from google.colab import drive
-drive.mount('/content/drive')
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.impute import SimpleImputer
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import SelectKBest,f_classif,VarianceThreshold,SelectFromModel,RFECV
-
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.feature_selection import VarianceThreshold,SelectFromModel
 
 
-X_train = pd.read_csv('/content/drive/MyDrive/9417group/X_train.csv')
-y_train = pd.read_csv('/content/drive/MyDrive/9417group/y_train.csv')
-X_test1 = pd.read_csv('/content/drive/MyDrive/9417group/X_test_1.csv')
-X_test2 = pd.read_csv('/content/drive/MyDrive/9417group/X_test_2.csv')
-y_test2_reduced = pd.read_csv('/content/drive/MyDrive/9417group/y_test_2_reduced.csv')
+X_train = pd.read_csv('X_train.csv')
+y_train = pd.read_csv('y_train.csv')
+X_test1 = pd.read_csv('X_test_1.csv')
+X_test2 = pd.read_csv('X_test_2.csv')
+y_test2_reduced = pd.read_csv('y_test_2_reduced.csv')
 
 print(f"X_train shape: {X_train.shape}")
 print(f"y_train shape: {y_train.shape}")

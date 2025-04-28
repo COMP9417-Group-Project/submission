@@ -4,20 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import f1_score 
-from sklearn.utils.class_weight import compute_class_weight
-from imblearn.over_sampling import SMOTE
-from sklearn.feature_selection import RFE
-
-import sys
-
 
 # define path
 y_train_path = 'y_train.csv'
@@ -162,7 +152,7 @@ def class_conditional_weights(source_X, source_y, target_X, target_y):
         y_domain = np.concatenate([np.zeros(len(source_indices)), np.ones(len(target_indices))])
         
         try:
-            lr = LogisticRegression(class_weight='balanced', max_iter=1000)
+            lr = LogisticRegression(random_state=0, class_weight='balanced', max_iter=2000, C=0.7, penalty='l2')
             lr.fit(X_domain, y_domain)
             
             # Get probabilities for source samples
